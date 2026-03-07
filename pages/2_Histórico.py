@@ -169,7 +169,6 @@ mensal = (
     .fillna(0)
 )
 
-mensal.columns = ["Valor_Categoria", "Receita_Mensal", "Despesa_Total"]
 mensal = mensal.fillna(0)
 
 mensal["Perc_Mensal"] = mensal["Valor_Categoria"] / mensal["Receita_Mensal"]
