@@ -329,7 +329,6 @@ fig.update_layout(
 # CLIQUE
 # ====================================
 
-
 fig.update_layout(
     autosize=True
 )
@@ -337,17 +336,15 @@ fig.update_layout(
 fig.update_yaxes(automargin=True)
 fig.update_xaxes(automargin=True)
 
-selected_points = plotly_events(
+event = st.plotly_chart(
     fig,
-    click_event=True,
-    hover_event=False,
-    select_event=False,
-    override_height=520
+    use_container_width=True,
+    on_select="rerun"
 )
 
-if selected_points:
+if event and event.selection:
 
-    pos_clicado = selected_points[0]["x"]
+    pos_clicado = event.selection.points[0]["x"]
 
     mes_clicado = mensal.loc[
         mensal["pos"] == pos_clicado, "AnoMes"
