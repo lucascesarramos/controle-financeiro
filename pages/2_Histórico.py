@@ -169,7 +169,6 @@ mensal = (
     .fillna(0)
 )
 
-mensal = mensal.fillna(0)
 
 mensal["Perc_Mensal"] = mensal["Valor_Categoria"] / mensal["Receita_Mensal"]
 mensal["Perc_Mensal"] = mensal["Perc_Mensal"].replace([float("inf"), -float("inf")], pd.NA)
