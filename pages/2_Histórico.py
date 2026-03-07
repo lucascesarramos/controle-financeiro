@@ -141,13 +141,32 @@ if tipo == "Despesas":
 # AGREGAÇÃO
 # ====================================
 
-mensal_categoria = df_categoria.groupby("AnoMes")["Valor"].sum()
-mensal_receita = df[df["Receita/Despesa"] == "Receita"].groupby("AnoMes")["Valor"].sum()
-mensal_despesa_total = df[df["Receita/Despesa"] == "Despesa"].groupby("AnoMes")["Valor"].sum()
+mensal_categoria = (
+    df_categoria
+    .groupby("AnoMes", as_index=False)["Valor"]
+    .sum()
+    .rename(columns={"Valor": "Valor_Categoria"})
+)
 
-mensal = pd.concat(
-    [mensal_categoria, mensal_receita, mensal_despesa_total],
-    axis=1
+mensal_receita = (
+    df[df["Receita/Despesa"] == "Receita"]
+    .groupby("AnoMes", as_index=False)["Valor"]
+    .sum()
+    .rename(columns={"Valor": "Receita_Mensal"})
+)
+
+mensal_despesa_total = (
+    df[df["Receita/Despesa"] == "Despesa"]
+    .groupby("AnoMes", as_index=False)["Valor"]
+    .sum()
+    .rename(columns={"Valor": "Despesa_Total"})
+)
+
+mensal = (
+    mensal_categoria
+    .merge(mensal_receita, on="AnoMes", how="left")
+    .merge(mensal_despesa_total, on="AnoMes", how="left")
+    .fillna(0)
 )
 
 mensal.columns = ["Valor_Categoria", "Receita_Mensal", "Despesa_Total"]
