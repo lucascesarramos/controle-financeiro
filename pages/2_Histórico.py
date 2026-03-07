@@ -335,8 +335,7 @@ selected_points = plotly_events(
     click_event=True,
     hover_event=False,
     select_event=False,
-    override_height=520,
-    use_container_width=True
+    override_height=520
 )
 
 if selected_points:
