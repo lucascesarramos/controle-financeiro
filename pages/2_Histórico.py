@@ -329,13 +329,14 @@ fig.update_layout(
 # CLIQUE
 # ====================================
 
-st.plotly_chart(fig, use_container_width=True)
 
 selected_points = plotly_events(
     fig,
     click_event=True,
     hover_event=False,
-    select_event=False
+    select_event=False,
+    override_height=520,
+    use_container_width=True
 )
 
 if selected_points:
