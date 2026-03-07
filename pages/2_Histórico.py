@@ -342,7 +342,7 @@ event = st.plotly_chart(
     on_select="rerun"
 )
 
-if event and event.selection:
+if event and event.selection and event.selection.points:
 
     pos_clicado = event.selection.points[0]["x"]
 
