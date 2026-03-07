@@ -213,10 +213,6 @@ mensal["Mes"] = mensal["Data_dt"].dt.strftime("%m %y")
 mensal["pos"] = range(len(mensal))
 
 
-st.write("mensal shape:", mensal.shape)
-st.write(mensal.head())
-st.write("Soma categoria:", mensal["Valor_Categoria"].sum())
-
 # ====================================
 # FIGURA
 # ====================================
@@ -333,12 +329,13 @@ fig.update_layout(
 # CLIQUE
 # ====================================
 
+st.plotly_chart(fig, use_container_width=True)
+
 selected_points = plotly_events(
     fig,
     click_event=True,
     hover_event=False,
-    select_event=False,
-    override_height=520
+    select_event=False
 )
 
 if selected_points:
