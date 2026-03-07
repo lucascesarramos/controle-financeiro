@@ -212,6 +212,11 @@ mensal["Data_dt"] = mensal["AnoMes"]
 mensal["Mes"] = mensal["Data_dt"].dt.strftime("%m %y")
 mensal["pos"] = range(len(mensal))
 
+
+st.write("mensal shape:", mensal.shape)
+st.write(mensal.head())
+st.write("Soma categoria:", mensal["Valor_Categoria"].sum())
+
 # ====================================
 # FIGURA
 # ====================================
