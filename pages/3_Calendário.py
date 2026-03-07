@@ -1,0 +1,288 @@
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import calendar
+
+from utils.data_loader import load_data
+from utils.layout import page_header
+
+# ====================================
+# FUNÇÕES PT-BR
+# ====================================
+
+def formatar_moeda(valor):
+    return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+meses_pt = {
+    1: "Janeiro",
+    2: "Fevereiro",
+    3: "Março",
+    4: "Abril",
+    5: "Maio",
+    6: "Junho",
+    7: "Julho",
+    8: "Agosto",
+    9: "Setembro",
+    10: "Outubro",
+    11: "Novembro",
+    12: "Dezembro"
+}
+
+# ====================================
+# DADOS
+# ====================================
+
+df, ultima_atualizacao = load_data()
+page_header("Calendário de Transações", ultima_atualizacao)
+
+if df.empty:
+    st.stop()
+
+df["Data"] = pd.to_datetime(df["Data"])
+
+# data real da transação (para posicionamento no calendário)
+df["Ano_transacao"] = df["Data"].dt.year
+df["Mes_transacao"] = df["Data"].dt.month
+df["Dia"] = df["Data"].dt.day
+
+# ====================================
+# FILTROS
+# ====================================
+
+st.markdown("### Filtros")
+
+col1, col2, col3 = st.columns(3)
+
+tipo = col1.selectbox(
+    "Receita/Despesa",
+    ["Todos"] + sorted(df["Receita/Despesa"].unique())
+)
+
+anos = sorted(df["Ano"].unique())
+anos_sel = col2.multiselect("Ano", anos, default=[anos[-1]])
+
+# último mês financeiro da base
+ultimo_ano = df["Ano"].max()
+ultimo_mes = df[df["Ano"] == ultimo_ano]["Mês"].max()
+
+meses_sel = col3.multiselect(
+    "Mês",
+    list(range(1, 13)),
+    default=[ultimo_mes]
+)
+
+categorias = ["Todas"] + sorted(df["Categoria"].dropna().unique())
+
+categorias_sel = st.multiselect(
+    "Categoria",
+    categorias,
+    default=["Todas"]
+)
+
+# lógica de categorias
+if "Todas" in categorias_sel:
+    categorias_filtrar = df["Categoria"].unique()
+else:
+    categorias_filtrar = categorias_sel
+
+# subcategorias dependentes da categoria
+subcats_disponiveis = (
+    df[df["Categoria"].isin(categorias_filtrar)]["Subcategoria"]
+    .dropna()
+    .unique()
+)
+
+subcategorias = ["Todas"] + sorted(subcats_disponiveis)
+
+subcategorias_sel = st.multiselect(
+    "Subcategoria",
+    subcategorias,
+    default=["Todas"]
+)
+
+if "Todas" in subcategorias_sel:
+    subcats_filtrar = subcats_disponiveis
+else:
+    subcats_filtrar = subcategorias_sel
+
+# ====================================
+# APLICAR FILTROS
+# ====================================
+
+df_filtrado = df.copy()
+
+df_filtrado = df_filtrado[df_filtrado["Ano"].isin(anos_sel)]
+df_filtrado = df_filtrado[df_filtrado["Mês"].isin(meses_sel)]
+
+if tipo != "Todos":
+    df_filtrado = df_filtrado[df_filtrado["Receita/Despesa"] == tipo]
+
+df_filtrado = df_filtrado[df_filtrado["Categoria"].isin(categorias_filtrar)]
+
+df_filtrado = df_filtrado[
+    (df_filtrado["Subcategoria"].isin(subcats_filtrar)) |
+    (df_filtrado["Subcategoria"].isna())
+]
+
+# ====================================
+# TÍTULO DINÂMICO
+# ====================================
+
+if len(meses_sel) == 0:
+    st.warning("Nenhum mês selecionado")
+    st.stop()
+
+meses_texto = [meses_pt[m] for m in sorted(meses_sel)]
+
+if len(meses_texto) == 1:
+    titulo = f"Transações pagas em {meses_texto[0]} de {anos_sel[0]}"
+elif len(meses_texto) == 2:
+    titulo = f"Transações pagas em {meses_texto[0]} e {meses_texto[1]} de {anos_sel[0]}"
+else:
+    titulo = f"Transações pagas entre {meses_texto[0]} e {meses_texto[-1]} de {anos_sel[0]}"
+
+st.markdown(f"### {titulo}")
+# ====================================
+# MAPA DE CORES (cores únicas)
+# ====================================
+
+categorias_unicas = sorted(df["Categoria"].dropna().unique())
+
+palette = [
+"#1D4ED8","#15803D","#9333EA","#F97316","#0EA5E9","#DC2626",
+"#A21CAF","#14B8A6","#F59E0B","#4F46E5","#059669","#B91C1C",
+"#7C3AED","#0369A1","#65A30D","#BE123C","#0F766E","#92400E",
+"#4338CA","#047857","#9D174D","#0C4A6E","#713F12","#701A75"
+]
+
+mapa_cores = {
+cat: palette[i]
+for i, cat in enumerate(categorias_unicas)
+}
+
+# ====================================
+# MESES A DESENHAR (baseados na data real)
+# ====================================
+
+meses_transacao = (
+    df_filtrado[["Ano_transacao", "Mes_transacao"]]
+    .drop_duplicates()
+    .sort_values(["Ano_transacao", "Mes_transacao"])
+)
+
+# ====================================
+# GERAR CALENDÁRIOS
+# ====================================
+
+for _, linha_mes in meses_transacao.iterrows():
+
+    ano = int(linha_mes["Ano_transacao"])
+    mes = int(linha_mes["Mes_transacao"])
+
+    df_mes = df_filtrado[
+        (df_filtrado["Ano_transacao"] == ano) &
+        (df_filtrado["Mes_transacao"] == mes)
+    ]
+
+    st.markdown(f"## {meses_pt[mes]} {ano}")
+
+    cal = calendar.Calendar(firstweekday=6)
+    dias_mes = cal.monthdayscalendar(ano, mes)
+
+    max_transacoes = 0
+    for dia in range(1, 32):
+        qtd = len(df_mes[df_mes["Dia"] == dia])
+        if qtd > max_transacoes:
+            max_transacoes = qtd
+
+    altura_transacao = 0.28
+    altura_base = 0.35
+    altura_celula = altura_base + (max_transacoes * altura_transacao)
+
+    fig = go.Figure()
+
+    for linha, semana in enumerate(dias_mes):
+        for coluna, dia in enumerate(semana):
+
+            if dia == 0:
+                continue
+
+            transacoes = df_mes[df_mes["Dia"] == dia]
+
+            y_base = -linha * altura_celula
+
+            fig.add_shape(
+                type="rect",
+                x0=coluna,
+                x1=coluna + 1,
+                y0=y_base,
+                y1=y_base - altura_celula,
+                line=dict(color="#9CA3AF", width=1.5),
+                fillcolor="rgba(0,0,0,0)",
+                layer="below"
+            )
+
+            fig.add_annotation(
+                x=coluna + 0.02,
+                y=y_base - 0.02,
+                text=f"<b>{dia}</b>",
+                showarrow=False,
+                xanchor="left",
+                yanchor="top",
+                font=dict(color="#374151", size=16)
+            )
+
+            offset = 0.25
+
+            for _, row in transacoes.iterrows():
+
+                y0 = y_base - offset
+                y1 = y_base - offset - 0.22
+                y_centro = (y0 + y1) / 2
+
+                fig.add_shape(
+                    type="rect",
+                    x0=coluna + 0.05,
+                    x1=coluna + 0.95,
+                    y0=y0,
+                    y1=y1,
+                    fillcolor=mapa_cores.get(row["Categoria"], "#999999"),
+                    line=dict(width=0),
+                    layer="below"
+                )
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=[coluna + 0.5],
+                        y=[y_centro],
+                        mode="text",
+                        text=[row["Descrição"][:18]],
+                        textposition="middle center",
+                        textfont=dict(color="white", size=20),
+                        hovertemplate=(
+                            f"{row['Descrição']}<br>"
+                            f"{formatar_moeda(row['Valor'])}"
+                            "<extra></extra>"
+                        ),
+                        showlegend=False
+                    )
+                )
+
+                offset += altura_transacao
+
+    fig.update_layout(
+        height=altura_celula * len(dias_mes) * 120,
+        xaxis=dict(
+            tickmode="array",
+            tickvals=list(range(7)),
+            ticktext=["dom.", "seg.", "ter.", "qua.", "qui.", "sex.", "sáb."],
+            showgrid=False
+        ),
+        yaxis=dict(showgrid=False, showticklabels=False),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=20, r=20, t=20, b=20),
+        hoverlabel=dict(font_size=20)
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
