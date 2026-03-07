@@ -330,6 +330,13 @@ fig.update_layout(
 # ====================================
 
 
+fig.update_layout(
+    autosize=True
+)
+
+fig.update_yaxes(automargin=True)
+fig.update_xaxes(automargin=True)
+
 selected_points = plotly_events(
     fig,
     click_event=True,
