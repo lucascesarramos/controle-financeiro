@@ -13,7 +13,6 @@ DATAHORA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOc4RezkY8EO1i8
 # CARREGAMENTO
 # =========================================
 
-@st.cache_data
 def load_data():
 
     # ----- Carrega dados principais -----
