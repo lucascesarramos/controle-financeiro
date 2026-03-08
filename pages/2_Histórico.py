@@ -29,7 +29,6 @@ page_header("Histórico Financeiro", ultima_atualizacao)
 if df.empty:
     st.stop()
 
-
 # ====================================
 # TOGGLE RECEITAS DE INVESTIMENTO
 # ====================================
@@ -42,7 +41,6 @@ with col_toggle:
         value=False
     )
 
-# aplica filtro
 if not incluir_investimentos:
     df = df[
         ~(
@@ -64,7 +62,7 @@ df["AnoMes"] = pd.to_datetime(dict(year=df["Ano"], month=df["Mês"], day=1))
 st.markdown("### Análise por Categoria")
 
 # ====================================
-# NOVO RADIO: RECEITA OU DESPESA
+# RADIO RECEITA / DESPESA
 # ====================================
 
 tipo = st.radio(
@@ -93,7 +91,7 @@ else:
     df_categoria = df_tipo[df_tipo["Categoria"] == categoria_selecionada]
 
 # ====================================
-# FILTRO SUBCATEGORIA (APENAS DESPESA)
+# SUBCATEGORIA
 # ====================================
 
 subcategoria_selecionada = "Todas"
@@ -124,7 +122,7 @@ if tipo == "Despesas":
         ]
 
 # ====================================
-# MODO VISUALIZAÇÃO (APENAS DESPESAS)
+# MODO VISUALIZAÇÃO
 # ====================================
 
 modo_visualizacao = "Valor Absoluto"
@@ -162,18 +160,32 @@ mensal_despesa_total = (
     .rename(columns={"Valor": "Despesa_Total"})
 )
 
+# === NOVA PARTE: sequência completa de meses ===
+
+todos_meses = pd.date_range(
+    start=df["AnoMes"].min(),
+    end=df["AnoMes"].max(),
+    freq="MS"
+)
+
+todos_meses = pd.DataFrame({"AnoMes": todos_meses})
+
 mensal = (
-    mensal_categoria
+    todos_meses
+    .merge(mensal_categoria, on="AnoMes", how="left")
     .merge(mensal_receita, on="AnoMes", how="left")
     .merge(mensal_despesa_total, on="AnoMes", how="left")
     .fillna(0)
 )
 
+# ====================================
+# MÉTRICAS
+# ====================================
 
 mensal["Perc_Mensal"] = mensal["Valor_Categoria"] / mensal["Receita_Mensal"]
 mensal["Perc_Mensal"] = mensal["Perc_Mensal"].replace([float("inf"), -float("inf")], pd.NA)
 
-mensal = mensal.reset_index().sort_values("AnoMes")
+mensal = mensal.sort_values("AnoMes").reset_index(drop=True)
 
 # ====================================
 # KPIs
@@ -211,7 +223,6 @@ else:
 mensal["Data_dt"] = mensal["AnoMes"]
 mensal["Mes"] = mensal["Data_dt"].dt.strftime("%m %y")
 mensal["pos"] = range(len(mensal))
-
 
 # ====================================
 # FIGURA
@@ -329,9 +340,7 @@ fig.update_layout(
 # CLIQUE
 # ====================================
 
-fig.update_layout(
-    autosize=True
-)
+fig.update_layout(autosize=True)
 
 fig.update_yaxes(automargin=True)
 fig.update_xaxes(automargin=True)
@@ -358,7 +367,6 @@ if event and event.selection and event.selection.points:
 
         df_tabela = df_mes[["Data", "Descrição", "Valor"]].copy()
         df_tabela["Data"] = df_tabela["Data"].dt.strftime("%d/%m/%Y")
-       
 
         maior_descricao = df_categoria["Descrição"].astype(str).str.len().max()
         largura_descricao = max(300, maior_descricao * 7)
