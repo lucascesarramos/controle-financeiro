@@ -68,7 +68,7 @@ meses_pt = {
 
 df, ultima_atualizacao = load_data()
 
-df = global_filters(df)
+df = global_filters(df, default_ultimo_mes=True)
 
 page_header("Calendário de Transações", ultima_atualizacao)
 
@@ -195,7 +195,7 @@ anos_sel = sorted(df_filtrado["Ano"].unique())
 meses_sel = sorted(df_filtrado["Mês"].unique())
 
 if len(meses_sel) == 0:
-    st.warning("Nenhum mês selecionado")
+    st.warning("Nenhuma transação a ser mostrada")
     st.stop()
 
 meses_texto = [meses_pt[m] for m in meses_sel]
