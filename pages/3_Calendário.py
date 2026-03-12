@@ -70,9 +70,6 @@ df, ultima_atualizacao = load_data()
 
 df = global_filters(df)
 
-anos_sel = sorted(df["Ano"].unique())
-meses_sel = sorted(df["Mês"].unique())
-
 page_header("Calendário de Transações", ultima_atualizacao)
 
 if df.empty:
@@ -189,6 +186,28 @@ df_filtrado = df_filtrado[
     (df_filtrado["Subcategoria"].isin(subcats_filtrar)) |
     (df_filtrado["Subcategoria"].isna())
 ]
+
+# ====================================
+# TÍTULO DINÂMICO (CORRIGIDO)
+# ====================================
+
+anos_sel = sorted(df_filtrado["Ano"].unique())
+meses_sel = sorted(df_filtrado["Mês"].unique())
+
+if len(meses_sel) == 0:
+    st.warning("Nenhum mês selecionado")
+    st.stop()
+
+meses_texto = [meses_pt[m] for m in meses_sel]
+
+if len(meses_texto) == 1:
+    titulo = f"Transações pagas em {meses_texto[0]} de {anos_sel[0]}"
+elif len(meses_texto) == 2:
+    titulo = f"Transações pagas em {meses_texto[0]} e {meses_texto[1]} de {anos_sel[0]}"
+else:
+    titulo = f"Transações pagas entre {meses_texto[0]} e {meses_texto[-1]} de {anos_sel[0]}"
+
+st.markdown(f"### {titulo}")
 
 # ====================================
 # MAPA DE CORES
