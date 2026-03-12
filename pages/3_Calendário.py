@@ -193,6 +193,10 @@ soma_transacoes = df_filtrado["Valor"].sum()
 # TÍTULO DINÂMICO
 # ====================================
 
+# ====================================
+# TÍTULO DINÂMICO
+# ====================================
+
 anos_sel = sorted(df_filtrado["Ano"].unique())
 meses_sel = sorted(df_filtrado["Mês"].unique())
 
@@ -206,12 +210,22 @@ ano_fim = max(anos_sel)
 mes_inicio = min(meses_sel)
 mes_fim = max(meses_sel)
 
-if ano_inicio == ano_fim and mes_inicio == mes_fim:
+# 1 mês
+if len(meses_sel) == 1 and len(anos_sel) == 1:
     titulo = f"Transações pagas em {meses_pt[mes_inicio]} de {ano_inicio}"
 
+# exatamente 2 meses
+elif len(meses_sel) == 2 and len(anos_sel) >= 1:
+    if ano_inicio == ano_fim:
+        titulo = f"Transações pagas em {meses_pt[mes_inicio]} e {meses_pt[mes_fim]} de {ano_inicio}"
+    else:
+        titulo = f"Transações pagas em {meses_pt[mes_inicio]} de {ano_inicio} e {meses_pt[mes_fim]} de {ano_fim}"
+
+# vários meses no mesmo ano
 elif ano_inicio == ano_fim:
     titulo = f"Transações pagas entre {meses_pt[mes_inicio]} e {meses_pt[mes_fim]} de {ano_inicio}"
 
+# vários anos
 else:
     titulo = f"Transações pagas entre {meses_pt[mes_inicio]} de {ano_inicio} e {meses_pt[mes_fim]} de {ano_fim}"
 
