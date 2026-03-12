@@ -302,7 +302,7 @@ for _, linha_mes in meses_transacao.iterrows():
 
             # destaque do dia atual
             if ano == hoje.year and mes == hoje.month and dia == hoje.day:
-                cor_fundo = "#F3F4F6"
+                cor_fundo = "#E5E7EB"
             else:
                 cor_fundo = "rgba(0,0,0,0)"
 
