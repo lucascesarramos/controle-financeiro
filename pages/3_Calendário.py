@@ -5,6 +5,8 @@ import calendar
 
 from utils.data_loader import load_data
 from utils.layout import page_header
+from utils.filters import global_filters
+
 
 def check_password():
 
@@ -44,6 +46,7 @@ if not check_password():
 def formatar_moeda(valor):
     return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
+
 meses_pt = {
     1: "Janeiro",
     2: "Fevereiro",
@@ -64,6 +67,9 @@ meses_pt = {
 # ====================================
 
 df, ultima_atualizacao = load_data()
+
+df = global_filters(df)
+
 page_header("Calendário de Transações", ultima_atualizacao)
 
 if df.empty:
@@ -82,41 +88,58 @@ df["Dia"] = df["Data"].dt.day
 
 st.markdown("### Filtros")
 
-col1, col2, col3 = st.columns(3)
-
-tipo = col1.selectbox(
+# Receita / Despesa
+tipo = st.selectbox(
     "Receita/Despesa",
     ["Todos"] + sorted(df["Receita/Despesa"].unique())
 )
 
-anos = sorted(df["Ano"].unique())
-anos_sel = col2.multiselect("Ano", anos, default=[anos[-1]])
+# ====================================
+# FILTROS DESPESA
+# ====================================
 
-# último mês financeiro da base
-ultimo_ano = df["Ano"].max()
-ultimo_mes = df[df["Ano"] == ultimo_ano]["Mês"].max()
+credito_debito = "Selecionar tudo"
+bancos_sel = []
 
-meses_sel = col3.multiselect(
-    "Mês",
-    list(range(1, 13)),
-    default=[ultimo_mes]
-)
+if tipo == "Despesa":
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        credito_debito = st.radio(
+            "Crédito ou débito?",
+            ["Selecionar tudo", "Cartão de Crédito", "Débito/Pix"]
+        )
+
+    with col2:
+        bancos = sorted(df["Banco"].dropna().unique())
+
+        bancos_sel = st.multiselect(
+            "Banco",
+            bancos,
+            default=bancos
+        )
+
+# ====================================
+# CATEGORIA / SUBCATEGORIA
+# ====================================
+
+col3, col4 = st.columns(2)
 
 categorias = ["Todas"] + sorted(df["Categoria"].dropna().unique())
 
-categorias_sel = st.multiselect(
-    "Categoria",
-    categorias,
-    default=["Todas"]
-)
+with col3:
+    categorias_sel = st.multiselect(
+        "Categoria",
+        categorias,
+        default=["Todas"]
+    )
 
-# lógica de categorias
 if "Todas" in categorias_sel:
     categorias_filtrar = df["Categoria"].unique()
 else:
     categorias_filtrar = categorias_sel
 
-# subcategorias dependentes da categoria
 subcats_disponiveis = (
     df[df["Categoria"].isin(categorias_filtrar)]["Subcategoria"]
     .dropna()
@@ -125,11 +148,12 @@ subcats_disponiveis = (
 
 subcategorias = ["Todas"] + sorted(subcats_disponiveis)
 
-subcategorias_sel = st.multiselect(
-    "Subcategoria",
-    subcategorias,
-    default=["Todas"]
-)
+with col4:
+    subcategorias_sel = st.multiselect(
+        "Subcategoria",
+        subcategorias,
+        default=["Todas"]
+    )
 
 if "Todas" in subcategorias_sel:
     subcats_filtrar = subcats_disponiveis
@@ -142,11 +166,19 @@ else:
 
 df_filtrado = df.copy()
 
-df_filtrado = df_filtrado[df_filtrado["Ano"].isin(anos_sel)]
-df_filtrado = df_filtrado[df_filtrado["Mês"].isin(meses_sel)]
-
 if tipo != "Todos":
     df_filtrado = df_filtrado[df_filtrado["Receita/Despesa"] == tipo]
+
+if tipo == "Despesa":
+
+    if credito_debito == "Cartão de Crédito":
+        df_filtrado = df_filtrado[df_filtrado["Cartão de Crédito?"] == "Sim"]
+
+    elif credito_debito == "Débito/Pix":
+        df_filtrado = df_filtrado[df_filtrado["Cartão de Crédito?"] == "Não"]
+
+    if bancos_sel:
+        df_filtrado = df_filtrado[df_filtrado["Banco"].isin(bancos_sel)]
 
 df_filtrado = df_filtrado[df_filtrado["Categoria"].isin(categorias_filtrar)]
 
@@ -156,25 +188,7 @@ df_filtrado = df_filtrado[
 ]
 
 # ====================================
-# TÍTULO DINÂMICO
-# ====================================
-
-if len(meses_sel) == 0:
-    st.warning("Nenhum mês selecionado")
-    st.stop()
-
-meses_texto = [meses_pt[m] for m in sorted(meses_sel)]
-
-if len(meses_texto) == 1:
-    titulo = f"Transações pagas em {meses_texto[0]} de {anos_sel[0]}"
-elif len(meses_texto) == 2:
-    titulo = f"Transações pagas em {meses_texto[0]} e {meses_texto[1]} de {anos_sel[0]}"
-else:
-    titulo = f"Transações pagas entre {meses_texto[0]} e {meses_texto[-1]} de {anos_sel[0]}"
-
-st.markdown(f"### {titulo}")
-# ====================================
-# MAPA DE CORES (cores únicas)
+# MAPA DE CORES
 # ====================================
 
 categorias_unicas = sorted(df["Categoria"].dropna().unique())
@@ -192,7 +206,7 @@ for i, cat in enumerate(categorias_unicas)
 }
 
 # ====================================
-# MESES A DESENHAR (baseados na data real)
+# MESES A DESENHAR
 # ====================================
 
 meses_transacao = (
