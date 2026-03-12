@@ -70,6 +70,9 @@ df, ultima_atualizacao = load_data()
 
 df = global_filters(df)
 
+anos_sel = sorted(df["Ano"].unique())
+meses_sel = sorted(df["Mês"].unique())
+
 page_header("Calendário de Transações", ultima_atualizacao)
 
 if df.empty:
