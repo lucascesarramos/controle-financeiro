@@ -82,15 +82,6 @@ df["Ano_transacao"] = df["Data"].dt.year
 df["Mes_transacao"] = df["Data"].dt.month
 df["Dia"] = df["Data"].dt.day
 
-
-col_titulo, col_kpi = st.columns([6,2])
-
-with col_kpi:
-    st.metric(
-        "💰 Soma das transações",
-        formatar_moeda(soma_transacoes)
-    )
-
 # ====================================
 # FILTROS
 # ====================================
@@ -199,7 +190,7 @@ df_filtrado = df_filtrado[
 soma_transacoes = df_filtrado["Valor"].sum()
 
 # ====================================
-# TÍTULO DINÂMICO (CORRIGIDO)
+# TÍTULO DINÂMICO
 # ====================================
 
 anos_sel = sorted(df_filtrado["Ano"].unique())
@@ -218,7 +209,17 @@ elif len(meses_texto) == 2:
 else:
     titulo = f"Transações pagas entre {meses_texto[0]} e {meses_texto[-1]} de {anos_sel[0]}"
 
-st.markdown(f"### {titulo}")
+# KPI + título
+col_titulo, col_kpi = st.columns([6,2])
+
+with col_titulo:
+    st.markdown(f"### {titulo}")
+
+with col_kpi:
+    st.metric(
+        "💰 Soma das transações",
+        formatar_moeda(soma_transacoes)
+    )
 
 # ====================================
 # MAPA DE CORES
