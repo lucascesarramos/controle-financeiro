@@ -82,6 +82,15 @@ df["Ano_transacao"] = df["Data"].dt.year
 df["Mes_transacao"] = df["Data"].dt.month
 df["Dia"] = df["Data"].dt.day
 
+
+col_titulo, col_kpi = st.columns([6,2])
+
+with col_kpi:
+    st.metric(
+        "💰 Soma das transações",
+        formatar_moeda(soma_transacoes)
+    )
+
 # ====================================
 # FILTROS
 # ====================================
@@ -186,6 +195,8 @@ df_filtrado = df_filtrado[
     (df_filtrado["Subcategoria"].isin(subcats_filtrar)) |
     (df_filtrado["Subcategoria"].isna())
 ]
+
+soma_transacoes = df_filtrado["Valor"].sum()
 
 # ====================================
 # TÍTULO DINÂMICO (CORRIGIDO)
