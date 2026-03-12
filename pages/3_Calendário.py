@@ -190,24 +190,30 @@ df_filtrado = df_filtrado[
 soma_transacoes = df_filtrado["Valor"].sum()
 
 # ====================================
-# TÍTULO DINÂMICO
+# TÍTULO DINÂMICO (INTELIGENTE)
 # ====================================
 
-anos_sel = sorted(df_filtrado["Ano"].unique())
-meses_sel = sorted(df_filtrado["Mês"].unique())
-
-if len(meses_sel) == 0:
+if df_filtrado.empty:
     st.warning("Nenhuma transação a ser mostrada")
     st.stop()
 
-meses_texto = [meses_pt[m] for m in meses_sel]
+data_inicio = df_filtrado["Data"].min()
+data_fim = df_filtrado["Data"].max()
 
-if len(meses_texto) == 1:
-    titulo = f"Transações pagas em {meses_texto[0]} de {anos_sel[0]}"
-elif len(meses_texto) == 2:
-    titulo = f"Transações pagas em {meses_texto[0]} e {meses_texto[1]} de {anos_sel[0]}"
+mes_inicio = data_inicio.month
+ano_inicio = data_inicio.year
+
+mes_fim = data_fim.month
+ano_fim = data_fim.year
+
+if mes_inicio == mes_fim and ano_inicio == ano_fim:
+    titulo = f"Transações pagas em {meses_pt[mes_inicio]} de {ano_inicio}"
+
+elif ano_inicio == ano_fim:
+    titulo = f"Transações pagas entre {meses_pt[mes_inicio]} e {meses_pt[mes_fim]} de {ano_inicio}"
+
 else:
-    titulo = f"Transações pagas entre {meses_texto[0]} e {meses_texto[-1]} de {anos_sel[0]}"
+    titulo = f"Transações pagas entre {meses_pt[mes_inicio]} de {ano_inicio} e {meses_pt[mes_fim]} de {ano_fim}"
 
 # KPI + título
 col_titulo, col_kpi = st.columns([6,2])
@@ -215,11 +221,12 @@ col_titulo, col_kpi = st.columns([6,2])
 with col_titulo:
     st.markdown(f"### {titulo}")
 
-with col_kpi:
-    st.metric(
-        "💰 Soma das transações",
-        formatar_moeda(soma_transacoes)
-    )
+if tipo != "Todos":
+    with col_kpi:
+        st.metric(
+            "💰 Soma das transações",
+            formatar_moeda(soma_transacoes)
+        )
 
 # ====================================
 # MAPA DE CORES
@@ -248,6 +255,9 @@ meses_transacao = (
     .drop_duplicates()
     .sort_values(["Ano_transacao", "Mes_transacao"])
 )
+
+# data atual para destaque
+hoje = pd.Timestamp.today()
 
 # ====================================
 # GERAR CALENDÁRIOS
@@ -290,6 +300,12 @@ for _, linha_mes in meses_transacao.iterrows():
 
             y_base = -linha * altura_celula
 
+            # destaque do dia atual
+            if ano == hoje.year and mes == hoje.month and dia == hoje.day:
+                cor_fundo = "#F3F4F6"
+            else:
+                cor_fundo = "rgba(0,0,0,0)"
+
             fig.add_shape(
                 type="rect",
                 x0=coluna,
@@ -297,7 +313,7 @@ for _, linha_mes in meses_transacao.iterrows():
                 y0=y_base,
                 y1=y_base - altura_celula,
                 line=dict(color="#9CA3AF", width=1.5),
-                fillcolor="rgba(0,0,0,0)",
+                fillcolor=cor_fundo,
                 layer="below"
             )
 
