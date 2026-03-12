@@ -190,23 +190,23 @@ df_filtrado = df_filtrado[
 soma_transacoes = df_filtrado["Valor"].sum()
 
 # ====================================
-# TÍTULO DINÂMICO (INTELIGENTE)
+# TÍTULO DINÂMICO
 # ====================================
 
-if df_filtrado.empty:
+anos_sel = sorted(df_filtrado["Ano"].unique())
+meses_sel = sorted(df_filtrado["Mês"].unique())
+
+if len(meses_sel) == 0:
     st.warning("Nenhuma transação a ser mostrada")
     st.stop()
 
-data_inicio = df_filtrado["Data"].min()
-data_fim = df_filtrado["Data"].max()
+ano_inicio = min(anos_sel)
+ano_fim = max(anos_sel)
 
-mes_inicio = data_inicio.month
-ano_inicio = data_inicio.year
+mes_inicio = min(meses_sel)
+mes_fim = max(meses_sel)
 
-mes_fim = data_fim.month
-ano_fim = data_fim.year
-
-if mes_inicio == mes_fim and ano_inicio == ano_fim:
+if ano_inicio == ano_fim and mes_inicio == mes_fim:
     titulo = f"Transações pagas em {meses_pt[mes_inicio]} de {ano_inicio}"
 
 elif ano_inicio == ano_fim:
