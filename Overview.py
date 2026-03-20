@@ -152,8 +152,8 @@ if metrica == "Saldo":
                 size=18,
                 color=["#B91C1C" if v < 0 else "#1E3A8A" for v in monthly["Saldo"]]
             ),
-            fill="tozeroy",
-            fillcolor="rgba(29,78,216,0.06)"
+            #fill="tozeroy",
+            #fillcolor="rgba(29,78,216,0.06)"
         )
     )
 
@@ -220,9 +220,6 @@ spread = p95 - p5
 y_min = p5 - spread * 0.5
 y_max = p95 + spread * 0.5
 
-# DEBUG - remova depois
-st.write(f"p5: {p5:.2f} | p95: {p95:.2f} | y_min: {y_min:.2f} | y_max: {y_max:.2f}")
-st.write(f"valores: {sorted(valores.dropna().tolist())}")
 
 fig.update_layout(
     title=f"{metrica} Mensal",
