@@ -370,7 +370,8 @@ for _, linha_mes in meses_transacao.iterrows():
                         textfont=dict(color="white", size=20),
                         hovertemplate=(
                             f"{row['Descrição']}<br>"
-                            f"{formatar_moeda(row['Valor'])}"
+                            f"{formatar_moeda(row['Valor'])}<br>"
+                            f"{row['Banco']}"
                             "<extra></extra>"
                         ),
                         showlegend=False
