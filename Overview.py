@@ -207,6 +207,8 @@ else:
 fig.update_layout(
     title=f"{metrica} Mensal",
     hoverlabel=dict(font_size=18),
+    plot_bgcolor="rgba(0,0,0,0)",   # <-- novo
+    paper_bgcolor="rgba(0,0,0,0)",  # <-- novo
     xaxis=dict(
         tickformat="%m %y",
         tickmode="array",
@@ -221,7 +223,8 @@ fig.update_layout(
     ),
     yaxis=dict(showgrid=False, showticklabels=False, title=None),
     showlegend=False,
-    margin=dict(l=40, r=40, t=60, b=40)
+    margin=dict(l=40, r=40, t=60, b=40),
+    height=450  # <-- novo: altura explícita igual ao override_height abaixo
 )
 
 # -- Renderiza com captura de clique --
