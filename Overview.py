@@ -120,166 +120,11 @@ metrica = st.radio(
 )
 
 # ==============================================
-# GRÁFICO DE LINHAS (com captura de clique)
-# ==============================================
-
-# -- Inicializa session_state para mês selecionado --
-if "mes_selecionado" not in st.session_state:
-    st.session_state["mes_selecionado"] = None
-
-fig = go.Figure()
-
-if metrica == "Saldo":
-
-    media = monthly["Saldo"].mean()
-    cores = ["#B91C1C" if v < 0 else "#1D4ED8" for v in monthly["Saldo"]]
-
-    tamanhos = []
-    for dt in monthly.index:
-        dt_str = str(dt.date())
-        tamanhos.append(16 if dt_str == st.session_state["mes_selecionado"] else 7)
-
-    fig.add_trace(
-        go.Scatter(
-            x=monthly.index,
-            y=monthly["Saldo"],
-            mode="lines+markers+text",
-            line=dict(color="#1D4ED8", width=3),
-            marker=dict(size=tamanhos, color=cores),
-            text=[f"<b>{v:,.1f}</b>".replace(",", "X").replace(".", ",").replace("X", ".") for v in monthly["Saldo"]],
-            textposition="top center",
-            textfont=dict(
-                size=18,
-                color=["#B91C1C" if v < 0 else "#1E3A8A" for v in monthly["Saldo"]]
-            ),
-            #fill="tozeroy",
-            #fillcolor="rgba(29,78,216,0.06)"
-        )
-    )
-
-    fig.add_hline(
-        y=media,
-        line_dash="dash",
-        line_color="#D1D5DB",
-        layer="below",
-        annotation_text=f"Média: {formatar_numero(media)}",
-        annotation_position="top right",
-        annotation_font_size=16
-    )
-
-    valores = monthly["Saldo"]
-
-else:
-
-    media = monthly["Perc_Economizado"].mean(skipna=True)
-    cores = [
-        "#B91C1C" if (pd.notna(v) and v < 0) else "#15803D"
-        for v in monthly["Perc_Economizado"]
-    ]
-
-    tamanhos = []
-    for dt in monthly.index:
-        dt_str = str(dt.date())
-        tamanhos.append(16 if dt_str == st.session_state["mes_selecionado"] else 7)
-
-    fig.add_trace(
-        go.Scatter(
-            x=monthly.index,
-            y=monthly["Perc_Economizado"],
-            mode="lines+markers+text",
-            line=dict(color="#15803D", width=3),
-            marker=dict(size=tamanhos, color=cores),
-            text=[f"<b>{v*100:.1f}</b>" if pd.notna(v) else "" for v in monthly["Perc_Economizado"]],
-            textposition="top center",
-            textfont=dict(size=20, color=cores)
-        )
-    )
-
-    fig.add_hline(
-        y=media,
-        line_dash="dash",
-        line_color="#D1D5DB",
-        layer="below",
-        annotation_text=f"Média: {media:.1%}",
-        annotation_position="top right",
-        annotation_font_size=16
-    )
-
-    valores = monthly["Perc_Economizado"].dropna()
-
-
-
-# Substitui o bloco:
-# y_min = min(valores.min(), media)
-# y_max = max(valores.max(), media)
-# y_padding = (y_max - y_min) * 0.35
-
-p5 = np.percentile(valores.dropna(), 5)
-p95 = np.percentile(valores.dropna(), 95)
-spread = p95 - p5
-y_min = p5 - spread * 0.5
-y_max = p95 + spread * 0.5
-
-
-fig.update_layout(
-    title=f"{metrica} Mensal",
-    hoverlabel=dict(font_size=18),
-    plot_bgcolor="rgba(0,0,0,0)",
-    paper_bgcolor="rgba(0,0,0,0)",
-    xaxis=dict(
-        tickformat="%m %y",
-        tickmode="array",
-        tickvals=monthly.index,
-        tickfont=dict(size=16),
-        showgrid=False,
-        title=None,
-        range=[
-            monthly.index.min() - pd.Timedelta(days=25),
-            monthly.index.max() + pd.Timedelta(days=25)
-        ]
-    ),
-    yaxis=dict(
-        showgrid=False,
-        showticklabels=False,
-        title=None,
-        autorange=False,
-        range=[y_min, y_max]
-    ),
-    showlegend=False,
-    margin=dict(l=40, r=40, t=60, b=40),
-    height=450
-)
-
-# -- Renderiza com captura de clique --
-clicked = plotly_events(fig, click_event=True, override_height=450)
-
-# -- Lógica de seleção/limpeza ao clicar --
-if clicked:
-    ponto_clicado = clicked[0]
-    x_raw = ponto_clicado.get("x", "")
-    try:
-        dt_clicado = str(pd.to_datetime(x_raw).date())
-    except Exception:
-        dt_clicado = None
-
-    if dt_clicado:
-        if st.session_state["mes_selecionado"] == dt_clicado:
-            st.session_state["mes_selecionado"] = None
-        else:
-            st.session_state["mes_selecionado"] = dt_clicado
-        st.rerun()
-
-# -- Indicador visual do filtro ativo --
-if st.session_state["mes_selecionado"]:
-    mes_fmt = pd.to_datetime(st.session_state["mes_selecionado"]).strftime("%b/%Y")
-    st.caption(f"🔍 Filtrando: **{mes_fmt}** — clique no mesmo ponto para limpar")
-
-# ==============================================
 # FILTRO DE MÊS PARA OS DEMAIS ELEMENTOS
 # ==============================================
 
 df_filtrado = df.copy()
-if st.session_state["mes_selecionado"]:
+if st.session_state.get("mes_selecionado"):
     dt_sel = pd.to_datetime(st.session_state["mes_selecionado"])
     df_filtrado = df_filtrado[df_filtrado["AnoMes_dt"] == dt_sel]
 
@@ -332,6 +177,163 @@ with col4:
         """,
         unsafe_allow_html=True
     )
+
+# ==============================================
+# GRÁFICO DE LINHAS (com captura de clique)
+# ==============================================
+
+# -- Inicializa session_state para mês selecionado --
+if "mes_selecionado" not in st.session_state:
+    st.session_state["mes_selecionado"] = None
+
+fig = go.Figure()
+
+if metrica == "Saldo":
+
+    media = monthly["Saldo"].mean()
+    cores = ["#B91C1C" if v < 0 else "#1D4ED8" for v in monthly["Saldo"]]
+
+    tamanhos = []
+    for dt in monthly.index:
+        dt_str = str(dt.date())
+        tamanhos.append(16 if dt_str == st.session_state["mes_selecionado"] else 7)
+
+    fig.add_trace(
+        go.Scatter(
+            x=monthly.index,
+            y=monthly["Saldo"],
+            mode="lines+markers+text",
+            line=dict(color="#1D4ED8", width=3),
+            marker=dict(size=tamanhos, color=cores),
+            text=[f"<b>{v:,.1f}</b>".replace(",", "X").replace(".", ",").replace("X", ".") for v in monthly["Saldo"]],
+            textposition="top center",
+            textfont=dict(
+                size=18,
+                color=["#B91C1C" if v < 0 else "#1E3A8A" for v in monthly["Saldo"]]
+            ),
+            #fill="tozeroy",
+            #fillcolor="rgba(29,78,216,0.06)"
+        )
+    )
+
+    fig.add_hline(
+        y=media,
+        line_dash="dash",
+        line_color="#D1D5DB",
+        layer="below",
+        annotation_text=f"Média: {formatar_numero(media)}",
+        annotation_position="top right",
+        annotation_font_size=16
+    )
+
+    fig.update_layout(
+        yaxis=dict(
+            showgrid=False,
+            showticklabels=False,
+            title=None,
+            autorange=True
+        )
+    )
+
+else:
+
+    media = monthly["Perc_Economizado"].mean(skipna=True)
+    cores = [
+        "#B91C1C" if (pd.notna(v) and v < 0) else "#15803D"
+        for v in monthly["Perc_Economizado"]
+    ]
+
+    tamanhos = []
+    for dt in monthly.index:
+        dt_str = str(dt.date())
+        tamanhos.append(16 if dt_str == st.session_state["mes_selecionado"] else 7)
+
+    fig.add_trace(
+        go.Scatter(
+            x=monthly.index,
+            y=monthly["Perc_Economizado"],
+            mode="lines+markers+text",
+            line=dict(color="#15803D", width=3),
+            marker=dict(size=tamanhos, color=cores),
+            text=[f"<b>{v*100:.1f}</b>" if pd.notna(v) else "" for v in monthly["Perc_Economizado"]],
+            textposition="top center",
+            textfont=dict(size=20, color=cores)
+        )
+    )
+
+    fig.add_hline(
+        y=media,
+        line_dash="dash",
+        line_color="#D1D5DB",
+        layer="below",
+        annotation_text=f"Média: {media:.1%}",
+        annotation_position="top right",
+        annotation_font_size=16
+    )
+
+    valores = monthly["Perc_Economizado"].dropna()
+    p5 = np.percentile(valores, 5)
+    p95 = np.percentile(valores, 95)
+    spread = p95 - p5
+    y_min = p5 - spread * 0.5
+    y_max = p95 + spread * 0.5
+
+    fig.update_layout(
+        yaxis=dict(
+            showgrid=False,
+            showticklabels=False,
+            title=None,
+            autorange=False,
+            range=[y_min, y_max]
+        )
+    )
+
+
+fig.update_layout(
+    title=f"{metrica} Mensal",
+    hoverlabel=dict(font_size=18),
+    plot_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="rgba(0,0,0,0)",
+    xaxis=dict(
+        tickformat="%m %y",
+        tickmode="array",
+        tickvals=monthly.index,
+        tickfont=dict(size=16),
+        showgrid=False,
+        title=None,
+        range=[
+            monthly.index.min() - pd.Timedelta(days=25),
+            monthly.index.max() + pd.Timedelta(days=25)
+        ]
+    ),
+    showlegend=False,
+    margin=dict(l=40, r=40, t=60, b=40),
+    height=450
+)
+
+# -- Renderiza com captura de clique --
+clicked = plotly_events(fig, click_event=True, override_height=450)
+
+# -- Lógica de seleção/limpeza ao clicar --
+if clicked:
+    ponto_clicado = clicked[0]
+    x_raw = ponto_clicado.get("x", "")
+    try:
+        dt_clicado = str(pd.to_datetime(x_raw).date())
+    except Exception:
+        dt_clicado = None
+
+    if dt_clicado:
+        if st.session_state["mes_selecionado"] == dt_clicado:
+            st.session_state["mes_selecionado"] = None
+        else:
+            st.session_state["mes_selecionado"] = dt_clicado
+        st.rerun()
+
+# -- Indicador visual do filtro ativo --
+if st.session_state["mes_selecionado"]:
+    mes_fmt = pd.to_datetime(st.session_state["mes_selecionado"]).strftime("%b/%Y")
+    st.caption(f"🔍 Filtrando: **{mes_fmt}** — clique no mesmo ponto para limpar")
 
 # ==============================================
 # SEÇÃO: COMPOSIÇÃO (INALTERADA, usa df_filtrado)
