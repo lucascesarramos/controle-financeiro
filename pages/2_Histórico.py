@@ -392,7 +392,11 @@ if event and event.selection and event.selection.points:
 
     df_mes = df_categoria[
         df_categoria["AnoMes"] == mes_clicado
-    ].sort_values("Data")
+    ].copy()
+
+    # GARANTE ordenação correta por data
+    df_mes["Data"] = pd.to_datetime(df_mes["Data"], dayfirst=True)
+    df_mes = df_mes.sort_values("Data", ascending=False)
 
     if not df_mes.empty:
 
@@ -414,7 +418,7 @@ if event and event.selection and event.selection.points:
             st.markdown("""
                 <style>
                 div[data-testid="stDataFrame"] table {
-                    font-size: 15px;
+                    font-size: 17px;
                 }
                 </style>
             """, unsafe_allow_html=True)

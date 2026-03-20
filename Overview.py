@@ -268,7 +268,7 @@ st.plotly_chart(fig, use_container_width=True)
 # ==============================================
 
 st.markdown("---")
-st.subheader("Composição das Despesas e Fluxo Mensal")
+st.subheader("Composição das Despesas e Agregados")
 
 col_left, col_right = st.columns(2)
 
