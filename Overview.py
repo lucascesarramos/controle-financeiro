@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+import numpy as np
 from streamlit_plotly_events import plotly_events
 
 from utils.data_loader import load_data
@@ -206,9 +207,18 @@ else:
 
     valores = monthly["Perc_Economizado"].dropna()
 
-y_min = min(valores.min(), media)
-y_max = max(valores.max(), media)
-y_padding = (y_max - y_min) * 0.35
+
+
+# Substitui o bloco:
+# y_min = min(valores.min(), media)
+# y_max = max(valores.max(), media)
+# y_padding = (y_max - y_min) * 0.35
+
+p5 = np.percentile(valores.dropna(), 5)
+p95 = np.percentile(valores.dropna(), 95)
+spread = p95 - p5
+y_min = p5 - spread * 0.5
+y_max = p95 + spread * 0.5
 
 fig.update_layout(
     title=f"{metrica} Mensal",
