@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from utils.data_loader import load_data
 from utils.filters import global_filters
 from utils.layout import page_header
+from streamlit_plotly_events import plotly_events
 
 
 def check_password():
@@ -64,6 +65,10 @@ def formatar_numero(valor):
 df, ultima_atualizacao = load_data()
 df = global_filters(df)
 
+# === SESSION STATE ===
+if "mes_selecionado" not in st.session_state:
+    st.session_state["mes_selecionado"] = None
+
 page_header("Overview Financeiro", ultima_atualizacao)
 
 # ====================================
@@ -91,57 +96,7 @@ if df.empty:
     st.stop()
 
 # ==============================
-# KPIs
-# ==============================
-
-receita_total = df[df["Receita/Despesa"] == "Receita"]["Valor"].sum()
-despesa_total = df[df["Receita/Despesa"] == "Despesa"]["Valor"].sum()
-saldo_total = receita_total - despesa_total
-
-perc_comprometido = despesa_total / receita_total if receita_total > 0 else 0
-
-if perc_comprometido > 1:
-    cor_comprometido = "#B91C1C"
-elif perc_comprometido >= 0.5:
-    cor_comprometido = "#CA8A04"
-else:
-    cor_comprometido = "#15803D"
-
-cor_saldo = "#15803D" if saldo_total >= 0 else "#B91C1C"
-
-col1, col2, col3, col4 = st.columns([1, 1, 1.3, 1])
-
-col1.metric("Receita", formatar_moeda(receita_total))
-col2.metric("Despesa", formatar_moeda(despesa_total))
-
-with col3:
-    st.markdown(
-        f"""
-        <div style="text-align:center">
-            <div style="font-size:16px;color:#6B7280">Saldo</div>
-            <div style="font-size:34px;font-weight:700;color:{cor_saldo}">
-                {formatar_moeda(saldo_total)}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-with col4:
-    st.markdown(
-        f"""
-        <div style="text-align:center">
-            <div style="font-size:16px;color:#6B7280">% da renda comprometida</div>
-            <div style="font-size:34px;font-weight:700;color:{cor_comprometido}">
-                {perc_comprometido:.2%}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-# ==============================
-# AGREGAÇÃO MENSAL
+# AGREGAÇÃO MENSAL (ANTES DO FILTRO)
 # ==============================
 
 df["AnoMes_dt"] = pd.to_datetime(dict(year=df["Ano"], month=df["Mês"], day=1))
@@ -170,7 +125,7 @@ metrica = st.radio(
 )
 
 # ==============================================
-# GRÁFICO
+# GRÁFICO (HISTÓRICO)
 # ==============================================
 
 fig = go.Figure()
@@ -261,10 +216,82 @@ fig.update_layout(
     margin=dict(l=40, r=40, t=60, b=40)
 )
 
-st.plotly_chart(fig, use_container_width=True)
+# === CLIQUE ===
+event = plotly_events(
+    fig,
+    click_event=True,
+    hover_event=False,
+    select_event=False,
+    key="overview"
+)
+
+if event:
+    x_clicado = pd.to_datetime(event[0]["x"])
+    st.session_state["mes_selecionado"] = x_clicado
 
 # ==============================================
-# SEÇÃO: COMPOSIÇÃO (INALTERADA)
+# FILTRO POR MÊS (SÓ PARA KPIs E GRÁFICOS)
+# ==============================================
+
+df_filtrado = df.copy()
+
+if st.session_state["mes_selecionado"] is not None:
+    df_filtrado = df_filtrado[
+        df_filtrado["AnoMes_dt"] == st.session_state["mes_selecionado"]
+    ]
+
+# ==============================
+# KPIs
+# ==============================
+
+receita_total = df_filtrado[df_filtrado["Receita/Despesa"] == "Receita"]["Valor"].sum()
+despesa_total = df_filtrado[df_filtrado["Receita/Despesa"] == "Despesa"]["Valor"].sum()
+saldo_total = receita_total - despesa_total
+
+perc_comprometido = despesa_total / receita_total if receita_total > 0 else 0
+
+if perc_comprometido > 1:
+    cor_comprometido = "#B91C1C"
+elif perc_comprometido >= 0.5:
+    cor_comprometido = "#CA8A04"
+else:
+    cor_comprometido = "#15803D"
+
+cor_saldo = "#15803D" if saldo_total >= 0 else "#B91C1C"
+
+col1, col2, col3, col4 = st.columns([1, 1, 1.3, 1])
+
+col1.metric("Receita", formatar_moeda(receita_total))
+col2.metric("Despesa", formatar_moeda(despesa_total))
+
+with col3:
+    st.markdown(
+        f"""
+        <div style="text-align:center">
+            <div style="font-size:16px;color:#6B7280">Saldo</div>
+            <div style="font-size:34px;font-weight:700;color:{cor_saldo}">
+                {formatar_moeda(saldo_total)}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col4:
+    st.markdown(
+        f"""
+        <div style="text-align:center">
+            <div style="font-size:16px;color:#6B7280">% da renda comprometida</div>
+            <div style="font-size:34px;font-weight:700;color:{cor_comprometido}">
+                {perc_comprometido:.2%}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ==============================================
+# SEÇÃO: COMPOSIÇÃO
 # ==============================================
 
 st.markdown("---")
@@ -273,7 +300,7 @@ st.subheader("Composição das Despesas e Fluxo Mensal")
 col_left, col_right = st.columns(2)
 
 with col_left:
-    despesas = df[df["Receita/Despesa"] == "Despesa"]
+    despesas = df_filtrado[df_filtrado["Receita/Despesa"] == "Despesa"]
 
     despesas_categoria = (
         despesas.groupby("Categoria")["Valor"]
@@ -282,85 +309,26 @@ with col_left:
         .reset_index()
     )
 
-    cores_categorias = [
-        "#1D4ED8", "#15803D", "#B91C1C", "#C2410C",
-        "#7C3AED", "#0891B2", "#BE185D",
-        "#A16207", "#374151", "#0F766E",
-    ]
-
     fig_donut = go.Figure(
         data=[
             go.Pie(
                 labels=despesas_categoria["Categoria"],
                 values=despesas_categoria["Valor"],
-                hole=0.65,
-                marker=dict(colors=cores_categorias),
-                textinfo="percent",
-                textfont=dict(size=16),
-                hovertemplate="<b>%{label}</b><br>R$ %{value:,.2f}<extra></extra>"
+                hole=0.65
             )
         ]
-    )
-
-    fig_donut.update_layout(
-        title=dict(text="Despesas por Categoria", font=dict(size=20)),
-        showlegend=True,
-        legend=dict(font=dict(size=14)),
-        margin=dict(l=20, r=20, t=60, b=20),
-        hoverlabel=dict(font_size=18)
     )
 
     st.plotly_chart(fig_donut, use_container_width=True)
 
 with col_right:
 
-    receita_total = df[df["Receita/Despesa"] == "Receita"]["Valor"].sum()
-    despesa_total = df[df["Receita/Despesa"] == "Despesa"]["Valor"].sum()
-
-    max_valor = max(receita_total, despesa_total)
-    limite_superior = max_valor * 1.25
+    receita_total = df_filtrado[df_filtrado["Receita/Despesa"] == "Receita"]["Valor"].sum()
+    despesa_total = df_filtrado[df_filtrado["Receita/Despesa"] == "Despesa"]["Valor"].sum()
 
     fig_bar = go.Figure()
 
-    fig_bar.add_trace(
-        go.Bar(
-            y=["Receita"],
-            x=[receita_total],
-            orientation="h",
-            marker_color="#15803D",
-            text=[f"<b>{formatar_moeda(receita_total)}</b>"],
-            textposition="outside",
-            textfont=dict(size=20),
-            width=0.4
-        )
-    )
-
-    fig_bar.add_trace(
-        go.Bar(
-            y=["Despesa"],
-            x=[despesa_total],
-            orientation="h",
-            marker_color="#B91C1C",
-            text=[f"<b>{formatar_moeda(despesa_total)}</b>"],
-            textposition="outside",
-            textfont=dict(size=20),
-            width=0.4
-        )
-    )
-
-    fig_bar.update_layout(
-        title=dict(text="Total de Receita e Despesa (Período Selecionado)", font=dict(size=20)),
-        showlegend=False,
-        xaxis=dict(
-            range=[0, limite_superior],
-            showgrid=True,
-            gridcolor="rgba(0,0,0,0.05)",
-            tickfont=dict(size=15),
-            title=None
-        ),
-        yaxis=dict(showgrid=False, tickfont=dict(size=18, color="#111827")),
-        bargap=0.5,
-        margin=dict(l=110, r=80, t=60, b=40)
-    )
+    fig_bar.add_trace(go.Bar(y=["Receita"], x=[receita_total], orientation="h"))
+    fig_bar.add_trace(go.Bar(y=["Despesa"], x=[despesa_total], orientation="h"))
 
     st.plotly_chart(fig_bar, use_container_width=True)
