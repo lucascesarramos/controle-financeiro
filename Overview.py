@@ -242,6 +242,7 @@ fig.update_layout(
         showgrid=False,
         showticklabels=False,
         title=None,
+        autorange=False,
         range=[y_min, y_max]
     ),
     showlegend=False,
