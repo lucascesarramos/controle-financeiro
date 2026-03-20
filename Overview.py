@@ -201,7 +201,7 @@ if metrica == "Saldo":
     fig.add_trace(
         go.Scatter(
             x=monthly.index,
-            y=monthly["Saldo"],
+            y=monthly["Saldo"].astype(float),
             mode="lines+markers+text",
             line=dict(color="#1D4ED8", width=3),
             marker=dict(size=tamanhos, color=cores),
