@@ -68,7 +68,7 @@ meses_pt = {
 
 df, ultima_atualizacao = load_data()
 
-df = global_filters(df, default_ultimo_mes=True)
+df = global_filters(df, default_ultimo_mes=False)
 
 page_header("Calendário de Transações", ultima_atualizacao)
 
