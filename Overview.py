@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from streamlit_plotly_events import plotly_events  # <-- nova dependência
+from streamlit_plotly_events import plotly_events
 
 from utils.data_loader import load_data
 from utils.filters import global_filters
@@ -133,7 +133,6 @@ if metrica == "Saldo":
     media = monthly["Saldo"].mean()
     cores = ["#B91C1C" if v < 0 else "#1D4ED8" for v in monthly["Saldo"]]
 
-    # -- Tamanho dos marcadores: maior no ponto selecionado --
     tamanhos = []
     for dt in monthly.index:
         dt_str = str(dt.date())
@@ -167,6 +166,8 @@ if metrica == "Saldo":
         annotation_font_size=16
     )
 
+    valores = monthly["Saldo"]
+
 else:
 
     media = monthly["Perc_Economizado"].mean(skipna=True)
@@ -175,7 +176,6 @@ else:
         for v in monthly["Perc_Economizado"]
     ]
 
-    # -- Tamanho dos marcadores: maior no ponto selecionado --
     tamanhos = []
     for dt in monthly.index:
         dt_str = str(dt.date())
@@ -204,15 +204,11 @@ else:
         annotation_font_size=16
     )
 
-# Calcule antes do fig.update_layout
-if metrica == "Saldo":
-    valores = monthly["Saldo"]
-else:
     valores = monthly["Perc_Economizado"].dropna()
 
-y_min = valores.min()
-y_max = valores.max()
-y_padding = (y_max - y_min) * 0.3  # 30% de respiro acima e abaixo
+y_min = min(valores.min(), media)
+y_max = max(valores.max(), media)
+y_padding = (y_max - y_min) * 0.35
 
 fig.update_layout(
     title=f"{metrica} Mensal",
@@ -235,7 +231,7 @@ fig.update_layout(
         showgrid=False,
         showticklabels=False,
         title=None,
-        range=[y_min - y_padding, y_max + y_padding]  # <-- novo
+        range=[y_min - y_padding, y_max + y_padding]
     ),
     showlegend=False,
     margin=dict(l=40, r=40, t=60, b=40),
@@ -249,7 +245,6 @@ clicked = plotly_events(fig, click_event=True, override_height=450)
 if clicked:
     ponto_clicado = clicked[0]
     x_raw = ponto_clicado.get("x", "")
-    # Normaliza para string de data (YYYY-MM-DD)
     try:
         dt_clicado = str(pd.to_datetime(x_raw).date())
     except Exception:
@@ -257,7 +252,6 @@ if clicked:
 
     if dt_clicado:
         if st.session_state["mes_selecionado"] == dt_clicado:
-            # Mesmo ponto: limpa seleção
             st.session_state["mes_selecionado"] = None
         else:
             st.session_state["mes_selecionado"] = dt_clicado
