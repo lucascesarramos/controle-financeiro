@@ -349,18 +349,22 @@ with col_right:
     )
 
     fig_bar.update_layout(
-        title=dict(text="Total de Receita e Despesa (Período Selecionado)", font=dict(size=20)),
-        showlegend=False,
-        xaxis=dict(
-            range=[0, limite_superior],
-            showgrid=True,
-            gridcolor="rgba(0,0,0,0.05)",
-            tickfont=dict(size=15),
-            title=None
-        ),
-        yaxis=dict(showgrid=False, tickfont=dict(size=18, color="#111827")),
-        bargap=0.5,
-        margin=dict(l=110, r=80, t=60, b=40)
-    )
+    title=dict(text="Total de Receita e Despesa (Período Selecionado)", font=dict(size=20)),
+    showlegend=False,
+    xaxis=dict(
+        range=[0, limite_superior],
+        showgrid=True,
+        gridcolor="rgba(0,0,0,0.05)",
+        tickfont=dict(size=15),
+        title=None
+    ),
+    yaxis=dict(
+        showgrid=False,
+        tickfont=dict(size=18, color="#111827"),
+        autorange="reversed"
+    ),
+    bargap=0.5,
+    margin=dict(l=110, r=80, t=60, b=40)
+)
 
     st.plotly_chart(fig_bar, use_container_width=True)
