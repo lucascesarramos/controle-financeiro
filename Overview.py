@@ -220,6 +220,10 @@ spread = p95 - p5
 y_min = p5 - spread * 0.5
 y_max = p95 + spread * 0.5
 
+# DEBUG - remova depois
+st.write(f"p5: {p5:.2f} | p95: {p95:.2f} | y_min: {y_min:.2f} | y_max: {y_max:.2f}")
+st.write(f"valores: {sorted(valores.dropna().tolist())}")
+
 fig.update_layout(
     title=f"{metrica} Mensal",
     hoverlabel=dict(font_size=18),
