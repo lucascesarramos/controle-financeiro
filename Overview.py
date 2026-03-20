@@ -241,7 +241,7 @@ fig.update_layout(
         showgrid=False,
         showticklabels=False,
         title=None,
-        range=[y_min - y_padding, y_max + y_padding]
+        range=[y_min, y_max]
     ),
     showlegend=False,
     margin=dict(l=40, r=40, t=60, b=40),
