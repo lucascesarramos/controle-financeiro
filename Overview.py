@@ -226,12 +226,22 @@ if metrica == "Saldo":
         annotation_font_size=16
     )
 
+    # Calcula os limites dinâmicos para o Saldo
+    y_min_saldo = monthly["Saldo"].min()
+    y_max_saldo = monthly["Saldo"].max()
+    spread_saldo = y_max_saldo - y_min_saldo
+    
+    # Adiciona uma margem de 20% para cima e para baixo para o gráfico respirar e os textos não cortarem
+    limite_inferior = y_min_saldo - (spread_saldo * 0.2)
+    limite_superior = y_max_saldo + (spread_saldo * 0.2)
+
     fig.update_layout(
         yaxis=dict(
             showgrid=False,
             showticklabels=False,
             title=None,
-            autorange=True
+            autorange=False,
+            range=[limite_inferior, limite_superior]
         )
     )
 
