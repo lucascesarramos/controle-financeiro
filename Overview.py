@@ -204,11 +204,21 @@ else:
         annotation_font_size=16
     )
 
+# Calcule antes do fig.update_layout
+if metrica == "Saldo":
+    valores = monthly["Saldo"]
+else:
+    valores = monthly["Perc_Economizado"].dropna()
+
+y_min = valores.min()
+y_max = valores.max()
+y_padding = (y_max - y_min) * 0.3  # 30% de respiro acima e abaixo
+
 fig.update_layout(
     title=f"{metrica} Mensal",
     hoverlabel=dict(font_size=18),
-    plot_bgcolor="rgba(0,0,0,0)",   # <-- novo
-    paper_bgcolor="rgba(0,0,0,0)",  # <-- novo
+    plot_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="rgba(0,0,0,0)",
     xaxis=dict(
         tickformat="%m %y",
         tickmode="array",
@@ -221,10 +231,15 @@ fig.update_layout(
             monthly.index.max() + pd.Timedelta(days=25)
         ]
     ),
-    yaxis=dict(showgrid=False, showticklabels=False, title=None),
+    yaxis=dict(
+        showgrid=False,
+        showticklabels=False,
+        title=None,
+        range=[y_min - y_padding, y_max + y_padding]  # <-- novo
+    ),
     showlegend=False,
     margin=dict(l=40, r=40, t=60, b=40),
-    height=450  # <-- novo: altura explícita igual ao override_height abaixo
+    height=450
 )
 
 # -- Renderiza com captura de clique --
