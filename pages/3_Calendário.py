@@ -193,10 +193,6 @@ soma_transacoes = df_filtrado["Valor"].sum()
 # TÍTULO DINÂMICO
 # ====================================
 
-# ====================================
-# TÍTULO DINÂMICO
-# ====================================
-
 anos_sel = sorted(df_filtrado["Ano"].unique())
 meses_sel = sorted(df_filtrado["Mês"].unique())
 
