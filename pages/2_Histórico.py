@@ -434,7 +434,7 @@ if event and event.selection and event.selection.points:
                     "Descrição": st.column_config.Column(width=largura_descricao, disabled=True),
                     "Valor": st.column_config.NumberColumn(
                         width=120,
-                        format="R$ %.1f",
+                        format="R$ %.2f",
                         disabled=True
                     )
                 },
