@@ -401,7 +401,11 @@ if event and event.selection and event.selection.points:
     if not df_mes.empty:
 
         df_tabela = df_mes[["Data", "Descrição", "Valor"]].copy()
-        df_tabela["Data"] = df_tabela["Data"].dt.strftime("%d/%m/%Y")
+
+        # Cria coluna formatada separada, sem sobrescrever o datetime
+        df_tabela["Data_fmt"] = df_tabela["Data"].dt.strftime("%d/%m/%Y")
+        df_tabela = df_tabela.drop(columns=["Data"]).rename(columns={"Data_fmt": "Data"})
+        df_tabela = df_tabela[["Data", "Descrição", "Valor"]]
 
         maior_descricao = df_categoria["Descrição"].astype(str).str.len().max()
         largura_descricao = max(300, maior_descricao * 7)
@@ -427,11 +431,12 @@ if event and event.selection and event.selection.points:
                 df_tabela,
                 use_container_width=False,
                 column_config={
-                    "Data": st.column_config.Column(width=100),
-                    "Descrição": st.column_config.Column(width=largura_descricao),
+                    "Data": st.column_config.Column(width=100, disabled=True),
+                    "Descrição": st.column_config.Column(width=largura_descricao, disabled=True),
                     "Valor": st.column_config.NumberColumn(
-                       width=120,
-                       format="R$ %.1f"
+                        width=120,
+                        format="R$ %.1f",
+                        disabled=True
                     )
                 },
                 hide_index=True
